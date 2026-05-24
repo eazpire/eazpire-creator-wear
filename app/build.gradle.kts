@@ -27,7 +27,14 @@ android {
         applicationId = "com.eazpire.creator.wear"
         minSdk = 30
         targetSdk = 35
-        versionCode = ciVersionCode.map { it.toInt() }.orElse(1).get()
+        versionCode = ciVersionCode.map { raw ->
+            val n = raw.toLongOrNull()
+                ?: error("Invalid VERSION_CODE: $raw")
+            require(n in 1..2_100_000_000L) {
+                "VERSION_CODE must be 1..2100000000 (Google Play max), got $n"
+            }
+            n.toInt()
+        }.orElse(1).get()
         versionName = providers.environmentVariable("VERSION_NAME")
             .orElse(ciVersionCode.map { "1.0.0 ($it)" })
             .get()
