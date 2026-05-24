@@ -105,15 +105,26 @@ jobs:
         run: |
           set -euo pipefail
           EXPECTED="${{ env.VERSION_CODE }}"
-          META=app/build/outputs/bundle/release/output-metadata.json
-          if [ ! -f "$META" ]; then
-            echo "::error::Missing $META after bundleRelease"
+          AAB=app/build/outputs/bundle/release/app-release.aab
+          if [ ! -f "$AAB" ]; then
+            echo "::error::Missing $AAB after bundleRelease"
             exit 1
           fi
-          ACTUAL=$(python3 -c "import json; print(json.load(open('$META'))['elements'][0]['versionCode'])")
-          echo "Expected versionCode=$EXPECTED Actual=$ACTUAL (from $META)"
-          if [ "$ACTUAL" != "$EXPECTED" ]; then
-            echo "::error::AAB versionCode mismatch (expected $EXPECTED, got $ACTUAL)"
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          MANIFEST=/tmp/wear-aab/base/manifest/AndroidManifest.xml
+          rm -rf /tmp/wear-aab && mkdir -p /tmp/wear-aab
+          unzip -q "$AAB" -d /tmp/wear-aab
+          LINE=$("$BUILD_TOOLS"/aapt2 dump xmltree --file "$MANIFEST" | grep -m1 'android:versionCode(0x' || true)
+          echo "Manifest: $LINE"
+          if echo "$LINE" | grep -qE '0x[0-9a-fA-F]+'; then
+            HEX=$(echo "$LINE" | grep -oE '0x[0-9a-fA-F]+' | tail -1)
+            ACTUAL=$((HEX))
+          else
+            ACTUAL=$(echo "$LINE" | sed -n 's/.*(type 0x10)\([0-9][0-9]*\).*/\1/p')
+          fi
+          echo "Expected versionCode=$EXPECTED Actual=$ACTUAL"
+          if [ -z "${ACTUAL:-}" ] || [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::AAB versionCode mismatch (expected $EXPECTED, got ${ACTUAL:-empty})"
             exit 1
           fi
 
