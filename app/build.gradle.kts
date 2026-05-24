@@ -37,6 +37,7 @@ android {
         }.orElse(1).get()
         versionName = providers.environmentVariable("VERSION_NAME")
             .orElse(ciVersionCode.map { "1.0.0 ($it)" })
+            .orElse("1.0.0")
             .get()
     }
 
