@@ -82,15 +82,15 @@ jobs:
           BASE='${{ vars.PLAY_VERSION_CODE_BASE }}'
           if [ -n "$BASE" ]; then
             VERSION_CODE=$(( BASE + RUN ))
-            echo "Using VERSION_CODE=$VERSION_CODE (PLAY_VERSION_CODE_BASE=$BASE + run=$RUN)"
+            echo "Computed VERSION_CODE=$VERSION_CODE (PLAY_VERSION_CODE_BASE=$BASE + run=$RUN)"
           else
             VERSION_CODE=$(( 2 + RUN ))
-            echo "Using VERSION_CODE=$VERSION_CODE (default 2 + run=$RUN)"
           fi
           if [ "$VERSION_CODE" -lt 2 ] || [ "$VERSION_CODE" -gt 2100000000 ]; then
-            echo "::error::VERSION_CODE $VERSION_CODE out of range (2–2100000000). Remove or lower repo variable PLAY_VERSION_CODE_BASE (values ≥2147483648 break Gradle)."
-            exit 1
+            echo "::warning::VERSION_CODE $VERSION_CODE invalid (need 2–2100000000). Ignoring PLAY_VERSION_CODE_BASE; using 2 + run=$RUN."
+            VERSION_CODE=$(( 2 + RUN ))
           fi
+          echo "Using VERSION_CODE=$VERSION_CODE"
           echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
 
       - name: Build release AAB
