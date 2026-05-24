@@ -107,11 +107,10 @@ jobs:
           BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           rm -rf /tmp/wear-aab && mkdir -p /tmp/wear-aab
           unzip -q app/build/outputs/bundle/release/app-release.aab -d /tmp/wear-aab
-          ACTUAL=$("$BUILD_TOOLS"/aapt2 dump xmltree /tmp/wear-aab/base/manifest/AndroidManifest.xml | awk '
-            /android:versionCode/ { getline; sub(/.*raw="/, ""); sub(/".*/, ""); print; exit }
-          ')
-          echo "Expected versionCode=$EXPECTED Actual=$ACTUAL"
-          if [ -z "$ACTUAL" ] || [ "$ACTUAL" != "$EXPECTED" ]; then
+          HEX=$("$BUILD_TOOLS"/aapt2 dump xmltree /tmp/wear-aab/base/manifest/AndroidManifest.xml | grep -m1 'android:versionCode' | sed -E 's/.*\)=\(type [^)]+\)(0x[0-9a-fA-F]+).*/\1/')
+          ACTUAL=$((HEX))
+          echo "Expected versionCode=$EXPECTED Actual=$ACTUAL (from manifest $HEX)"
+          if [ -z "$HEX" ] || [ "$ACTUAL" != "$EXPECTED" ]; then
             echo "::error::AAB versionCode mismatch (expected $EXPECTED, got ${ACTUAL:-empty})"
             exit 1
           fi
