@@ -105,9 +105,10 @@ jobs:
         run: |
           EXPECTED="${{ env.VERSION_CODE }}"
           BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          MANIFEST=/tmp/wear-aab/base/manifest/AndroidManifest.xml
           rm -rf /tmp/wear-aab && mkdir -p /tmp/wear-aab
           unzip -q app/build/outputs/bundle/release/app-release.aab -d /tmp/wear-aab
-          HEX=$("$BUILD_TOOLS"/aapt2 dump xmltree /tmp/wear-aab/base/manifest/AndroidManifest.xml | grep -m1 'android:versionCode' | sed -E 's/.*\)=\(type [^)]+\)(0x[0-9a-fA-F]+).*/\1/')
+          HEX=$("$BUILD_TOOLS"/aapt2 dump xmltree --file "$MANIFEST" | grep -m1 'android:versionCode' | sed -E 's/.*\)=\(type [^)]+\)(0x[0-9a-fA-F]+).*/\1/')
           ACTUAL=$((HEX))
           echo "Expected versionCode=$EXPECTED Actual=$ACTUAL (from manifest $HEX)"
           if [ -z "$HEX" ] || [ "$ACTUAL" != "$EXPECTED" ]; then
