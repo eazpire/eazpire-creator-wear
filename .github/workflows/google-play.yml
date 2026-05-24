@@ -2,7 +2,8 @@
 #
 # Aktivierung (Repo eazpire-creator-wear):
 #   Variable ENABLE_GOOGLE_PLAY = true
-#   Optional PLAY_DEFAULT_TRACK, PLAY_VERSION_CODE_BASE (default 3000000000)
+#   Optional PLAY_DEFAULT_TRACK (wear:internal | wear:alpha | …), PLAY_VERSION_CODE_BASE (default 3000000000)
+#   Wear bundles must use wear:* tracks, not phone "internal" — see Play Console Advanced settings → Wear OS track.
 #
 # Secrets: PLAY_SERVICE_ACCOUNT_JSON, ANDROID_KEYSTORE_*
 
@@ -84,7 +85,18 @@ jobs:
       - name: Build release AAB
         env:
           CI: "true"
+          VERSION_CODE: ${{ env.VERSION_CODE }}
         run: ./gradlew bundleRelease --no-daemon --stacktrace
+
+      - name: Resolve Wear Play track
+        run: |
+          RAW='${{ github.event_name == 'workflow_dispatch' && github.event.inputs.track || vars.PLAY_DEFAULT_TRACK || 'internal' }}'
+          case "$RAW" in
+            wear:*) PLAY_TRACK="$RAW" ;;
+            *) PLAY_TRACK="wear:$RAW" ;;
+          esac
+          echo "PLAY_TRACK=$PLAY_TRACK" >> "$GITHUB_ENV"
+          echo "Using Play track: $PLAY_TRACK"
 
       - name: Upload to Google Play
         uses: r0adkll/upload-google-play@v1
@@ -92,5 +104,5 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.eazpire.creator.wear
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
-          track: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.track || vars.PLAY_DEFAULT_TRACK || 'internal' }}
+          track: ${{ env.PLAY_TRACK }}
           status: completed
