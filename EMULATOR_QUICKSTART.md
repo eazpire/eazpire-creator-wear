@@ -74,7 +74,14 @@ Debug-APK: `%LOCALAPPDATA%\eazpire-wear-build\app\outputs\apk\debug\app-debug.ap
 
 ## Nur ein kleiner Streifen oben („Eazpire Creator“) + Uhr?
 
-Das ist **kein Widget** — die Uhr war im **Ambient-Modus** (Energiesparen). Die App wurde oben als Mini-Streifen gezeichnet, darunter das Zifferblatt.
+Das ist **kein Widget** und keine Complication. Wear OS 5+ wechselt nach Inaktivität zurück auf das **Zifferblatt**; die App bleibt nur als **schmaler Streifen oben** sichtbar (Ongoing-Activity-Vorschau).
+
+**So bekommst du die volle App:**
+
+1. App-Liste → **Eazpire Creator** öffnen (nicht nur das Zifferblatt ansehen).
+2. Oben auf dem Streifen **tippen** oder unten am Zifferblatt das **Eazpire-Icon** (Ongoing Activity) — öffnet die App wieder Vollbild.
+3. Emulator: **Einstellungen → Entwickleroptionen → Stay awake**.
+4. Beim ersten Start ggf. **Benachrichtigungen erlauben** (für Ongoing Activity / sichtbar bleiben).
 
 **Fix:** App antippen / Bildschirm antippen → **interaktiver Modus** → volles Display (Logo, Tabs, Inhalt).
 

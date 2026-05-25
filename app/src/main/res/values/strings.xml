@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Eazpire Creator</string>
+    <string name="wear_ongoing_channel">Eazpire session</string>
+    <string name="wear_ongoing_channel_desc">Keeps the creator app reachable from the watch face</string>
+    <string name="wear_ongoing_status">Eazpire Creator open</string>
 </resources>

@@ -1,17 +1,20 @@
 package com.eazpire.creator.wear
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.wear.ambient.AmbientLifecycleObserver
 import com.eazpire.creator.core.auth.SecureTokenStore
 import com.eazpire.creator.wear.auth.WearAuthListenerService
 import com.eazpire.creator.wear.auth.bootstrapAuthFromPhone
@@ -20,44 +23,41 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
 
     private lateinit var tokenStore: SecureTokenStore
-    private val isAmbientState = mutableStateOf(false)
 
-    private val ambientObserver: AmbientLifecycleObserver by lazy {
-        AmbientLifecycleObserver(
-            this,
-            object : AmbientLifecycleObserver.AmbientLifecycleCallback {
-                override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) {
-                    isAmbientState.value = true
-                }
-
-                override fun onExitAmbient() {
-                    isAmbientState.value = false
-                }
-            },
-        )
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { _ ->
+        WearOngoingSession.start(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        keepInteractiveForWear()
+        applyFullscreenWindow()
         tokenStore = SecureTokenStore(this)
-        lifecycle.addObserver(ambientObserver)
 
         setContent {
             WearEazTheme {
-                val isAmbient by isAmbientState
-                WearAmbientRoot(
+                WearApp(
                     tokenStore = tokenStore,
-                    isAmbient = isAmbient,
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        ensureOngoingSession()
+    }
+
+    override fun onStop() {
+        WearOngoingSession.stop(this)
+        super.onStop()
+    }
+
     override fun onResume() {
         super.onResume()
-        keepInteractiveForWear()
+        applyFullscreenWindow()
         if (!::tokenStore.isInitialized) return
         lifecycleScope.launch {
             bootstrapAuthFromPhone(this@MainActivity, tokenStore)
@@ -70,12 +70,27 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun keepInteractiveForWear() {
+    private fun ensureOngoingSession() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            return
+        }
+        WearOngoingSession.start(this)
+    }
+
+    private fun applyFullscreenWindow() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
         }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
     }
 }

@@ -37,7 +37,10 @@ import kotlinx.coroutines.launch
 private const val SPLASH_MIN_MS = 2000L
 
 @Composable
-fun WearApp(tokenStore: SecureTokenStore) {
+fun WearApp(
+    tokenStore: SecureTokenStore,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val translationStore = remember { WearTranslationStore() }
@@ -104,7 +107,7 @@ fun WearApp(tokenStore: SecureTokenStore) {
     }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(EazColors.CreatorBg),
     ) {
