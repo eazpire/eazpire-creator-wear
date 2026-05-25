@@ -1,9 +1,6 @@
 package com.eazpire.creator.wear.ui
 
 import android.os.Build
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,6 +17,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.wear.compose.foundation.lazy.AutoCenteringParams
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
@@ -40,7 +40,10 @@ private sealed class PairUiState {
     data object Error : PairUiState()
 }
 
-/** Full-screen QR login — no tabs, no demo, no extra chips. */
+/**
+ * QR pairing — [ScalingLazyColumn] keeps content in the round safe zone (center band).
+ * Long hints belong in short lines below the QR, not in a full-width row at the top.
+ */
 @Composable
 fun WearPairingScreen(
     tokenStore: SecureTokenStore,
@@ -59,6 +62,9 @@ fun WearPairingScreen(
     }
     var state by remember { mutableStateOf<PairUiState>(PairUiState.Loading) }
     var sessionGeneration by remember { mutableIntStateOf(0) }
+
+    val hintLine1 = translationStore.t("wear.pair_hint_line1", "Scan with Eazpire app")
+    val hintLine2 = translationStore.t("wear.pair_hint_line2", "Creator Wear → Connect")
 
     LaunchedEffect(deviceId, sessionGeneration) {
         state = PairUiState.Loading
@@ -113,28 +119,15 @@ fun WearPairingScreen(
         }
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center,
+    val listState = rememberScalingLazyListState(initialCenterItemIndex = 1)
+    ScalingLazyColumn(
+        modifier = modifier.fillMaxWidth(),
+        state = listState,
+        contentPadding = WearRoundInsets.contentPadding,
+        autoCentering = AutoCenteringParams(itemIndex = 1),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(
-                text = translationStore.t(
-                    "wear.pair_qr_hint",
-                    "Eazpire app → Creator Settings → Creator Wear → Connect",
-                ),
-                style = MaterialTheme.typography.caption2,
-                color = EazColors.TextSecondary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 6.dp),
-            )
+        item {
             when (val s = state) {
                 PairUiState.Loading -> CircularProgressIndicator()
                 PairUiState.Error -> {
@@ -143,16 +136,40 @@ fun WearPairingScreen(
                         text = translationStore.t("wear.pair_qr_error", "Loading QR…"),
                         style = MaterialTheme.typography.caption3,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 6.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp),
                     )
                 }
                 is PairUiState.Qr -> AsyncImage(
                     model = s.qrUrl,
                     contentDescription = "Pairing QR",
-                    modifier = Modifier.size(160.dp),
+                    modifier = Modifier.size(120.dp),
                     contentScale = ContentScale.Fit,
                 )
             }
+        }
+        item {
+            Text(
+                text = hintLine1,
+                style = MaterialTheme.typography.caption2,
+                color = EazColors.TextSecondary,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+            )
+        }
+        item {
+            Text(
+                text = hintLine2,
+                style = MaterialTheme.typography.caption3,
+                color = EazColors.TextSecondary.copy(alpha = 0.85f),
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }

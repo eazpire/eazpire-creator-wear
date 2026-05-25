@@ -45,7 +45,9 @@ fun WearCarouselScreen(
     val current = items.getOrNull(index.coerceIn(0, (total - 1).coerceAtLeast(0)))
 
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .wearRoundSafePadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

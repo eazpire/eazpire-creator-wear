@@ -137,10 +137,9 @@ fun WearGeneratorScreen(
 
     val listState = rememberScalingLazyListState(initialCenterItemIndex = 0)
     ScalingLazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp),
+        modifier = modifier.fillMaxSize(),
         state = listState,
+        contentPadding = WearRoundInsets.contentPadding,
         autoCentering = AutoCenteringParams(itemIndex = 0),
         verticalArrangement = Arrangement.spacedBy(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

@@ -116,8 +116,9 @@ fun WearDashboardScreen(
 
     val listState = rememberScalingLazyListState(initialCenterItemIndex = 0)
     ScalingLazyColumn(
-        modifier = modifier.padding(horizontal = 6.dp),
+        modifier = modifier.fillMaxWidth(),
         state = listState,
+        contentPadding = WearRoundInsets.contentPadding,
         autoCentering = AutoCenteringParams(itemIndex = 0),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {

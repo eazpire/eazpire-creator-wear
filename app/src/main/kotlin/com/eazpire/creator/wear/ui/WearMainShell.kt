@@ -48,7 +48,7 @@ fun WearMainShell(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(top = 10.dp, start = 8.dp, end = 8.dp, bottom = 6.dp),
+            .wearRoundSafePadding(),
     ) {
         Chip(
             onClick = { },
