@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.MaterialTheme
+import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import com.eazpire.creator.core.auth.SecureTokenStore
 import com.eazpire.creator.core.i18n.WearTranslationStore
@@ -106,32 +107,39 @@ fun WearApp(
         onDispose { context.unregisterReceiver(receiver) }
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(EazColors.CreatorBg),
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        timeText = { },
+        vignette = { },
+        positionIndicator = { },
     ) {
-        when {
-            showSplash -> WearSplashScreen(modifier = Modifier.fillMaxSize())
-            !bootstrapped -> WearLoadingPane(translationStore)
-            !loggedIn && !demoPreview -> WearPairingScreen(
-                translationStore = translationStore,
-                connectionStatus = connectionStatus,
-                onRetrySync = { scope.launch { applyBootstrapResult() } },
-                onDemoPreview = if (com.eazpire.creator.wear.BuildConfig.DEBUG) {
-                    { demoPreview = true }
-                } else {
-                    null
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-            else -> WearMainShell(
-                tokenStore = tokenStore,
-                translationStore = translationStore,
-                demoPreview = demoPreview && !loggedIn,
-                refreshKey = refreshKey,
-                modifier = Modifier.fillMaxSize(),
-            )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(EazColors.CreatorBg),
+        ) {
+            when {
+                showSplash -> WearSplashScreen(modifier = Modifier.fillMaxSize())
+                !bootstrapped -> WearLoadingPane(translationStore)
+                !loggedIn && !demoPreview -> WearPairingScreen(
+                    translationStore = translationStore,
+                    connectionStatus = connectionStatus,
+                    onRetrySync = { scope.launch { applyBootstrapResult() } },
+                    onDemoPreview = if (com.eazpire.creator.wear.BuildConfig.DEBUG) {
+                        { demoPreview = true }
+                    } else {
+                        null
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+                else -> WearMainShell(
+                    tokenStore = tokenStore,
+                    translationStore = translationStore,
+                    demoPreview = demoPreview && !loggedIn,
+                    refreshKey = refreshKey,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }

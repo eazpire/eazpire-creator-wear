@@ -1,39 +1,47 @@
 package com.eazpire.creator.wear
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
-import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.wear.ambient.AmbientLifecycleObserver
 import com.eazpire.creator.core.auth.SecureTokenStore
 import com.eazpire.creator.wear.auth.WearAuthListenerService
 import com.eazpire.creator.wear.auth.bootstrapAuthFromPhone
 import kotlinx.coroutines.launch
 
+/**
+ * Wear OS 6 (API 36) expects targetSdk 36 + ambient registration for full-screen apps.
+ * Without this, the system keeps the watch face visible and shows the app as a thin strip.
+ */
 class MainActivity : ComponentActivity() {
 
     private lateinit var tokenStore: SecureTokenStore
 
-    private val notificationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { _ ->
-        WearOngoingSession.start(this)
+    private val ambientObserver: AmbientLifecycleObserver by lazy {
+        AmbientLifecycleObserver(
+            this,
+            object : AmbientLifecycleObserver.AmbientLifecycleCallback {
+                override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) {
+                    // Keep full UI; Wear OS 6 dims the display but still uses the full window.
+                }
+
+                override fun onExitAmbient() {
+                    applyFullscreenWindow()
+                }
+            },
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         applyFullscreenWindow()
         tokenStore = SecureTokenStore(this)
+        lifecycle.addObserver(ambientObserver)
 
         setContent {
             WearEazTheme {
@@ -43,16 +51,6 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        ensureOngoingSession()
-    }
-
-    override fun onStop() {
-        WearOngoingSession.stop(this)
-        super.onStop()
     }
 
     override fun onResume() {
@@ -70,27 +68,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun ensureOngoingSession() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            return
-        }
-        WearOngoingSession.start(this)
-    }
-
     private fun applyFullscreenWindow() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
         }
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        WindowCompat.setDecorFitsSystemWindows(window, true)
-        WindowInsetsControllerCompat(window, window.decorView).apply {
-            hide(WindowInsetsCompat.Type.systemBars())
-            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
+        @Suppress("DEPRECATION")
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+        )
     }
 }

@@ -18,12 +18,12 @@ val ciVersionCode = providers.gradleProperty("VERSION_CODE")
 
 android {
     namespace = "com.eazpire.creator.wear"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.eazpire.creator.wear"
         minSdk = 30
-        targetSdk = 35
+        targetSdk = 36
         versionCode = ciVersionCode.map { raw ->
             val n = raw.toLongOrNull()
                 ?: error("Invalid VERSION_CODE: $raw")
@@ -56,7 +56,7 @@ android {
             }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
@@ -84,13 +84,18 @@ tasks.register("printReleaseVersionCode") {
     }
 }
 
+configurations.configureEach {
+    exclude(group = "androidx.compose.material", module = "material")
+    exclude(group = "androidx.compose.material", module = "material-android")
+}
+
 dependencies {
     implementation(project(":creator-core"))
 
     implementation(platform("androidx.compose:compose-bom:2024.10.01"))
     implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
-    implementation("androidx.activity:activity-compose:1.8.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
@@ -98,7 +103,7 @@ dependencies {
     implementation("androidx.wear.compose:compose-material:1.4.0")
     implementation("androidx.wear.compose:compose-foundation:1.4.0")
     implementation("androidx.wear.compose:compose-navigation:1.4.0")
-    implementation("androidx.wear:wear-ongoing:1.1.0")
+    implementation("androidx.wear:wear:1.4.0")
 
     implementation("com.google.android.gms:play-services-wearable:18.2.0")
     implementation("io.coil-kt:coil-compose:2.5.0")

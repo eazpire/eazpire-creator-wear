@@ -7,7 +7,6 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -22,14 +21,14 @@
 
         <meta-data
             android:name="com.google.android.wearable.standalone"
-            android:value="false" />
+            android:value="true" />
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:configChanges="uiMode|screenSize|smallestScreenSize|screenLayout"
             android:launchMode="singleTask"
             android:showWhenLocked="true"
-            android:taskAffinity=""
             android:theme="@style/Theme.EazWear"
             android:turnScreenOn="true">
             <intent-filter>

@@ -44,7 +44,7 @@ fun WearMainShell(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(top = 28.dp, start = 10.dp, end = 10.dp, bottom = 8.dp),
+            .padding(top = 12.dp, start = 10.dp, end = 10.dp, bottom = 8.dp),
     ) {
         if (demoPreview) {
             Text(
