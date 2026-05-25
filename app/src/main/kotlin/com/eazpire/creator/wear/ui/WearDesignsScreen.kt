@@ -94,7 +94,7 @@ fun WearDesignsScreen(
         searchQuery = searchQuery,
         onSearchQueryChange = { searchQuery = it },
         onVoiceSearch = { launchVoice() },
-        searchPlaceholder = translationStore.t("wear.search_designs", "Search designs…"),
+        searchPlaceholder = translationStore.t("wear.search_short", "Search…"),
         showSearch = true,
         modifier = modifier,
     )

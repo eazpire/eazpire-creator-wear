@@ -5,10 +5,12 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -60,9 +62,7 @@ fun WearCarouselScreen(
     val current = filtered.getOrNull(safeIndex)
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .wearRoundSafePadding(),
+        modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (showSearch) {
@@ -74,29 +74,38 @@ fun WearCarouselScreen(
                 },
                 onVoiceClick = onVoiceSearch,
                 placeholder = searchPlaceholder,
+                compact = true,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 4.dp),
+                    .padding(top = 0.dp, bottom = 2.dp),
             )
         }
 
         when {
-            loading -> Box(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
+            loading -> {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
             }
-            total == 0 -> Box(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = emptyText,
-                    style = MaterialTheme.typography.body2,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(12.dp),
-                )
+            total == 0 -> {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = emptyText,
+                        style = MaterialTheme.typography.body2,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                    )
+                }
             }
             else -> {
                 Box(
@@ -117,7 +126,9 @@ fun WearCarouselScreen(
                         AsyncImage(
                             model = url,
                             contentDescription = current.label,
-                            modifier = Modifier.size(88.dp),
+                            modifier = Modifier
+                                .fillMaxWidth(0.92f)
+                                .fillMaxHeight(0.98f),
                             contentScale = ContentScale.Fit,
                         )
                     } else {
@@ -125,16 +136,27 @@ fun WearCarouselScreen(
                             text = current?.label ?: "—",
                             style = MaterialTheme.typography.body2,
                             textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 12.dp),
                         )
                     }
                 }
-                WearPageDots(pageCount = total, currentPage = safeIndex)
-                Text(
-                    text = "${safeIndex + 1}/$total",
-                    style = MaterialTheme.typography.caption2,
-                    color = EazColors.TextPrimary.copy(alpha = 0.8f),
-                    modifier = Modifier.padding(top = 2.dp, bottom = 2.dp),
-                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    WearPageDots(pageCount = total, currentPage = safeIndex)
+                    Text(
+                        text = "${safeIndex + 1}/$total",
+                        style = MaterialTheme.typography.caption2,
+                        color = EazColors.TextPrimary.copy(alpha = 0.75f),
+                    )
+                }
             }
         }
     }

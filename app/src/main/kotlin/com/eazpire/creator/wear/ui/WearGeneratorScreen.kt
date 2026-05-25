@@ -206,10 +206,14 @@ fun WearGeneratorScreen(
                     showGenStarted = false
                     onGenerationStarted()
                 } else {
-                    status = res.optString("error", res.optString("message", "failed"))
+                    status = formatWearApiError(
+                        translationStore,
+                        res.optString("error", null),
+                        res.optString("message", null),
+                    )
                 }
             } catch (e: Exception) {
-                status = e.message
+                status = e.message ?: formatWearApiError(translationStore, null, null)
             } finally {
                 generating = false
             }

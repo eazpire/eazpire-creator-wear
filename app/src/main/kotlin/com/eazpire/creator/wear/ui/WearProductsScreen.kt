@@ -15,10 +15,7 @@ import com.eazpire.creator.core.api.CreatorApi
 import com.eazpire.creator.core.auth.SecureTokenStore
 import com.eazpire.creator.core.i18n.WearTranslationStore
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
 
 @Composable
 fun WearProductsScreen(
@@ -63,17 +60,7 @@ fun WearProductsScreen(
         loading = true
         try {
             val list = withContext(Dispatchers.IO) {
-                val res = api.getPublishedProducts(ownerId)
-                if (!res.optBoolean("ok", false)) return@withContext emptyList()
-                val arr: JSONArray = res.optJSONArray("products") ?: JSONArray()
-                buildList {
-                    for (i in 0 until arr.length()) {
-                        val o = arr.optJSONObject(i) ?: continue
-                        val img = o.optString("featured_image", "").takeIf { it.isNotBlank() }
-                        val name = o.optString("product_name", "").takeIf { it.isNotBlank() }
-                        add(WearCarouselItem(imageUrl = img, label = name))
-                    }
-                }
+                loadWearProductCarouselItems(api, ownerId)
             }
             items = list
         } catch (_: Exception) {
@@ -89,7 +76,7 @@ fun WearProductsScreen(
         searchQuery = searchQuery,
         onSearchQueryChange = { searchQuery = it },
         onVoiceSearch = { launchVoice() },
-        searchPlaceholder = translationStore.t("wear.search_products", "Search products…"),
+        searchPlaceholder = translationStore.t("wear.search_short", "Search…"),
         showSearch = true,
         modifier = modifier,
     )

@@ -108,24 +108,31 @@ fun WearSearchBar(
     onVoiceClick: () -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
 ) {
+    val padH = if (compact) 6.dp else 10.dp
+    val padV = if (compact) 2.dp else 6.dp
+    val micSize = if (compact) 28.dp else 40.dp
+    val iconSp = if (compact) 11.sp else 14.sp
+    val fieldSp = if (compact) 9.sp else 11.sp
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(CircleShape)
             .background(Color.White.copy(alpha = 0.12f))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(horizontal = padH, vertical = padV),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp),
     ) {
-        Text("⌕", color = EazColors.Orange, fontSize = 14.sp)
+        Text("⌕", color = EazColors.Orange, fontSize = iconSp)
         BasicTextField(
             value = query,
             onValueChange = onQueryChange,
             modifier = Modifier.weight(1f),
             textStyle = MaterialTheme.typography.caption2.copy(
                 color = EazColors.TextPrimary,
-                fontSize = 11.sp,
+                fontSize = fieldSp,
             ),
             singleLine = true,
             cursorBrush = SolidColor(EazColors.Orange),
@@ -147,8 +154,8 @@ fun WearSearchBar(
         WearRoundIconButton(
             onClick = onVoiceClick,
             contentDescription = "Voice search",
-            modifier = Modifier.size(40.dp),
-            icon = { Text("🎤", fontSize = 14.sp) },
+            modifier = Modifier.size(micSize),
+            icon = { Text("🎤", fontSize = if (compact) 11.sp else 14.sp) },
         )
     }
 }

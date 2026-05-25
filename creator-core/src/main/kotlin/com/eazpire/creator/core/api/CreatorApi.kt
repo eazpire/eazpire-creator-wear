@@ -74,8 +74,20 @@ class CreatorApi(
     suspend fun listR2Designs(ownerId: String, limit: Int = 24): JSONObject =
         call("list-r2", mapOf("owner_id" to ownerId, "limit" to limit.toString()))
 
-    suspend fun getPublishedProducts(ownerId: String): JSONObject =
-        call("get-published-products", mapOf("owner_id" to ownerId))
+    suspend fun getPublishedProducts(
+        ownerId: String,
+        shop: String? = com.eazpire.creator.core.auth.AuthConfig.SHOP_DOMAIN,
+    ): JSONObject {
+        val params = mutableMapOf("owner_id" to ownerId)
+        shop?.takeIf { it.isNotBlank() }?.let { params["shop"] = it }
+        return call("get-published-products", params)
+    }
+
+    suspend fun getProductsByKeys(ownerId: String, productKeys: String): JSONObject =
+        call(
+            "get-products-by-keys",
+            mapOf("owner_id" to ownerId, "product_keys" to productKeys),
+        )
 
     suspend fun wearGenerate(ownerId: String, prompt: String? = null, imageUrl: String? = null): JSONObject {
         val body = JSONObject().put("owner_id", ownerId)
