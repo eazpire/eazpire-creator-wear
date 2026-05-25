@@ -15,7 +15,9 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.foundation.lazy.AutoCenteringParams
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import com.eazpire.creator.core.api.CreatorApi
 import com.eazpire.creator.core.auth.SecureTokenStore
 import com.eazpire.creator.core.i18n.WearTranslationStore
@@ -28,6 +30,7 @@ fun WearDashboardScreen(
     translationStore: WearTranslationStore,
     refreshKey: Int,
     useDemoData: Boolean = false,
+    showTitle: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val ownerId = remember(tokenStore) { tokenStore.getOwnerId().orEmpty() }
@@ -81,18 +84,23 @@ fun WearDashboardScreen(
         loading = false
     }
 
+    val listState = rememberScalingLazyListState(initialCenterItemIndex = 0)
     ScalingLazyColumn(
-        modifier = modifier.padding(horizontal = 12.dp),
+        modifier = modifier.padding(horizontal = 8.dp),
+        state = listState,
+        autoCentering = AutoCenteringParams(itemIndex = 0),
         verticalArrangement = Arrangement.spacedBy(6.dp),
-        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
     ) {
-        item {
-            Text(
-                text = translationStore.t("wear.dashboard", "Dashboard"),
-                style = MaterialTheme.typography.title3,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+        if (showTitle) {
+            item {
+                Text(
+                    text = translationStore.t("wear.dashboard", "Dashboard"),
+                    style = MaterialTheme.typography.title3,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
         if (loading) {
             item { CircularProgressIndicator() }

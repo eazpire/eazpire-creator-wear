@@ -19,9 +19,6 @@ val ciVersionCode = providers.gradleProperty("VERSION_CODE")
 android {
     namespace = "com.eazpire.creator.wear"
     compileSdk = 35
-    if (System.getenv("CI") != "true") {
-        buildDir = file("${System.getProperty("java.io.tmpdir")}/eazpire-wear-build/${project.name}")
-    }
 
     defaultConfig {
         applicationId = "com.eazpire.creator.wear"

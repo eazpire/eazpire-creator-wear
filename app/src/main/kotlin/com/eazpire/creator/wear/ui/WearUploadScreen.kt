@@ -18,7 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.foundation.lazy.AutoCenteringParams
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import coil.compose.AsyncImage
 import com.eazpire.creator.core.api.CreatorPhoneUploadApi
 import com.eazpire.creator.core.auth.SecureTokenStore
@@ -40,6 +42,7 @@ fun WearUploadScreen(
     translationStore: WearTranslationStore,
     refreshKey: Int,
     useDemoData: Boolean = false,
+    showTitle: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val ownerId = remember(tokenStore) { tokenStore.getOwnerId().orEmpty() }
@@ -48,10 +51,7 @@ fun WearUploadScreen(
         mutableStateOf<UploadUiState>(
             if (useDemoData) {
                 UploadUiState.Error(
-                    translationStore.t(
-                        "wear.upload_demo",
-                        "Log in on phone to use QR upload",
-                    ),
+                    translationStore.t("wear.upload_demo", "Log in on phone for QR"),
                 )
             } else {
                 UploadUiState.Loading
@@ -103,18 +103,23 @@ fun WearUploadScreen(
         }
     }
 
+    val listState = rememberScalingLazyListState(initialCenterItemIndex = 0)
     ScalingLazyColumn(
         modifier = modifier.padding(horizontal = 8.dp),
+        state = listState,
+        autoCentering = AutoCenteringParams(itemIndex = 0),
         verticalArrangement = Arrangement.spacedBy(6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        item {
-            Text(
-                text = translationStore.t("wear.upload", "Phone upload"),
-                style = MaterialTheme.typography.title3,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+        if (showTitle) {
+            item {
+                Text(
+                    text = translationStore.t("wear.upload", "Phone upload"),
+                    style = MaterialTheme.typography.title3,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
         when (val s = state) {
             UploadUiState.Loading -> item { CircularProgressIndicator() }

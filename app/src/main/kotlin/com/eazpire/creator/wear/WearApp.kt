@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -23,29 +22,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.CircularProgressIndicator
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material.Vignette
 import androidx.wear.compose.material.VignettePosition
 import com.eazpire.creator.core.auth.SecureTokenStore
 import com.eazpire.creator.core.i18n.WearTranslationStore
 import com.eazpire.creator.wear.auth.WearAuthListenerService
 import com.eazpire.creator.wear.auth.bootstrapAuthFromPhone
-import com.eazpire.creator.wear.ui.WearDashboardScreen
-import com.eazpire.creator.wear.ui.WearJobsScreen
+import com.eazpire.creator.wear.ui.WearMainShell
 import com.eazpire.creator.wear.ui.WearPairingScreen
 import com.eazpire.creator.wear.ui.WearSplashScreen
-import com.eazpire.creator.wear.ui.WearUploadScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private const val SPLASH_MIN_MS = 2000L
-
-private enum class WearTab { Dashboard, Jobs, Upload }
 
 @Composable
 fun WearApp(tokenStore: SecureTokenStore) {
@@ -57,7 +49,6 @@ fun WearApp(tokenStore: SecureTokenStore) {
     var loggedIn by remember { mutableStateOf(tokenStore.isLoggedIn()) }
     var demoPreview by remember { mutableStateOf(false) }
     var refreshKey by remember { mutableIntStateOf(0) }
-    var tab by remember { mutableStateOf(WearTab.Dashboard) }
     var connectionStatus by remember { mutableStateOf("") }
 
     fun refreshAuthState() {
@@ -119,7 +110,7 @@ fun WearApp(tokenStore: SecureTokenStore) {
         modifier = Modifier
             .fillMaxSize()
             .background(EazColors.CreatorBg),
-        timeText = { if (!showSplash) TimeText() },
+        timeText = { },
         vignette = { if (!showSplash) Vignette(vignettePosition = VignettePosition.TopAndBottom) },
     ) {
         when {
@@ -136,13 +127,12 @@ fun WearApp(tokenStore: SecureTokenStore) {
                 },
                 modifier = Modifier.fillMaxSize(),
             )
-            else -> WearMainContent(
+            else -> WearMainShell(
                 tokenStore = tokenStore,
                 translationStore = translationStore,
                 demoPreview = demoPreview && !loggedIn,
-                tab = tab,
-                onTab = { tab = it },
                 refreshKey = refreshKey,
+                modifier = Modifier.fillMaxSize(),
             )
         }
     }
@@ -161,88 +151,4 @@ private fun WearLoadingPane(translationStore: WearTranslationStore) {
             )
         }
     }
-}
-
-@Composable
-private fun WearMainContent(
-    tokenStore: SecureTokenStore,
-    translationStore: WearTranslationStore,
-    demoPreview: Boolean,
-    tab: WearTab,
-    onTab: (WearTab) -> Unit,
-    refreshKey: Int,
-) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        if (demoPreview) {
-            Text(
-                text = translationStore.t(
-                    "wear.demo_banner",
-                    "Demo preview — log in on phone for live data",
-                ),
-                style = MaterialTheme.typography.caption2,
-                color = EazColors.Orange,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-            )
-        }
-        Column(modifier = Modifier.fillMaxWidth()) {
-            WearNavChip(
-                label = translationStore.t("wear.dashboard", "Dashboard"),
-                selected = tab == WearTab.Dashboard,
-                onClick = { onTab(WearTab.Dashboard) },
-            )
-            WearNavChip(
-                label = translationStore.t("creator.notifications.active_jobs", "Active Jobs"),
-                selected = tab == WearTab.Jobs,
-                onClick = { onTab(WearTab.Jobs) },
-            )
-            WearNavChip(
-                label = translationStore.t("wear.upload", "Phone upload"),
-                selected = tab == WearTab.Upload,
-                onClick = { onTab(WearTab.Upload) },
-            )
-        }
-        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            when (tab) {
-                WearTab.Dashboard -> WearDashboardScreen(
-                    tokenStore = tokenStore,
-                    translationStore = translationStore,
-                    refreshKey = refreshKey,
-                    useDemoData = demoPreview,
-                    modifier = Modifier.fillMaxSize(),
-                )
-                WearTab.Jobs -> WearJobsScreen(
-                    tokenStore = tokenStore,
-                    translationStore = translationStore,
-                    refreshKey = refreshKey,
-                    useDemoData = demoPreview,
-                    modifier = Modifier.fillMaxSize(),
-                )
-                WearTab.Upload -> WearUploadScreen(
-                    tokenStore = tokenStore,
-                    translationStore = translationStore,
-                    refreshKey = refreshKey,
-                    useDemoData = demoPreview,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun WearNavChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    Chip(
-        onClick = onClick,
-        label = { Text(label, maxLines = 1) },
-        colors = ChipDefaults.chipColors(
-            backgroundColor = if (selected) EazColors.Orange else MaterialTheme.colors.surface,
-            contentColor = EazColors.TextPrimary,
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(40.dp),
-    )
 }
