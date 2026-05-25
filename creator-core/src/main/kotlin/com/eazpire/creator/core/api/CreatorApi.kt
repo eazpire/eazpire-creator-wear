@@ -4,9 +4,12 @@ import com.eazpire.creator.core.auth.AuthConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
@@ -74,6 +77,22 @@ class CreatorApi(
     suspend fun listR2Designs(ownerId: String, limit: Int = 24): JSONObject =
         call("list-r2", mapOf("owner_id" to ownerId, "limit" to limit.toString()))
 
+    suspend fun getBalance(ownerId: String): JSONObject =
+        call("get-balance", mapOf("owner_id" to ownerId))
+
+    suspend fun listSavedDesigns(ownerId: String, limit: Int = 40): JSONObject =
+        call(
+            "list",
+            mapOf(
+                "owner_id" to ownerId,
+                "limit" to limit.toString(),
+                "library_status" to "active",
+            ),
+        )
+
+    suspend fun listInactiveDesigns(ownerId: String, limit: Int = 40): JSONObject =
+        call("list-generated", mapOf("owner_id" to ownerId, "limit" to limit.toString()))
+
     suspend fun getPublishedProducts(
         ownerId: String,
         shop: String? = com.eazpire.creator.core.auth.AuthConfig.SHOP_DOMAIN,
@@ -115,6 +134,55 @@ class CreatorApi(
 
     fun phoneUploadQrUrl(sessionId: String): String =
         "$baseUrl/api/creator-phone-upload/qr-image?session=${java.net.URLEncoder.encode(sessionId, "UTF-8")}"
+
+    /** POST ?op=upload-design — image fetched from URL (after phone QR upload). */
+    suspend fun uploadDesignFromImageUrl(
+        ownerId: String,
+        imageUrl: String,
+        creatorName: String? = null,
+    ): JSONObject = withContext(Dispatchers.IO) {
+        val bytesReq = Request.Builder().url(imageUrl).get().build()
+        val bytesRes = client.newCall(bytesReq).execute()
+        if (!bytesRes.isSuccessful) {
+            return@withContext JSONObject().put("ok", false).put("error", "image_fetch_failed")
+        }
+        val bodyBytes = bytesRes.body?.bytes() ?: ByteArray(0)
+        if (bodyBytes.isEmpty()) {
+            return@withContext JSONObject().put("ok", false).put("error", "empty_image")
+        }
+        val mime = bytesRes.header("Content-Type")?.substringBefore(";")?.trim()
+            ?: "image/png"
+        val ext = when {
+            mime.contains("jpeg", ignoreCase = true) || mime.contains("jpg", ignoreCase = true) -> "jpg"
+            mime.contains("webp", ignoreCase = true) -> "webp"
+            mime.contains("svg", ignoreCase = true) -> "svg"
+            else -> "png"
+        }
+        val tmp = File.createTempFile("wear-upload-", ".$ext")
+        try {
+            tmp.writeBytes(bodyBytes)
+            val fileBody = tmp.asRequestBody(mime.toMediaType())
+            val multipart = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("image", "design.$ext", fileBody)
+            creatorName?.takeIf { it.isNotBlank() }?.let {
+                multipart.addFormDataPart("creator_name", it)
+            }
+            val url = buildString {
+                append("$baseUrl/apps/creator-dispatch?op=upload-design")
+                append("&owner_id=").append(java.net.URLEncoder.encode(ownerId, "UTF-8"))
+                append("&_t=").append(System.currentTimeMillis())
+            }
+            val request = Request.Builder()
+                .url(url)
+                .post(multipart.build())
+                .apply { jwt?.let { addHeader("Authorization", "Bearer $it") } }
+                .build()
+            JSONObject(client.newCall(request).execute().body?.string() ?: "{}")
+        } finally {
+            tmp.delete()
+        }
+    }
 
     private suspend fun postJson(url: String, jsonBody: String): JSONObject = withContext(Dispatchers.IO) {
         val request = Request.Builder()

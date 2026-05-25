@@ -2,9 +2,11 @@ package com.eazpire.creator.wear.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,6 +47,11 @@ fun WearCarouselScreen(
     onVoiceSearch: () -> Unit = {},
     searchPlaceholder: String = "Search…",
     showSearch: Boolean = false,
+    activityFilter: String? = null,
+    onActivityFilterChange: ((String) -> Unit)? = null,
+    activeLabel: String = "Active",
+    inactiveLabel: String = "Inactive",
+    onUploadClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var index by remember(items, searchQuery) { mutableIntStateOf(0) }
@@ -73,12 +80,43 @@ fun WearCarouselScreen(
                     index = 0
                 },
                 onVoiceClick = onVoiceSearch,
+                onUploadClick = onUploadClick,
                 placeholder = searchPlaceholder,
                 compact = true,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 0.dp, bottom = 2.dp),
             )
+            if (activityFilter != null && onActivityFilterChange != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = activeLabel,
+                        style = MaterialTheme.typography.caption2,
+                        color = if (activityFilter == "active") {
+                            EazColors.Orange
+                        } else {
+                            EazColors.TextPrimary.copy(alpha = 0.55f)
+                        },
+                        modifier = Modifier.clickable { onActivityFilterChange("active") },
+                    )
+                    Text(
+                        text = inactiveLabel,
+                        style = MaterialTheme.typography.caption2,
+                        color = if (activityFilter == "inactive") {
+                            EazColors.Orange
+                        } else {
+                            EazColors.TextPrimary.copy(alpha = 0.55f)
+                        },
+                        modifier = Modifier.clickable { onActivityFilterChange("inactive") },
+                    )
+                }
+            }
         }
 
         when {

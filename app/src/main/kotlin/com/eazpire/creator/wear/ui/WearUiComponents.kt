@@ -109,6 +109,7 @@ fun WearSearchBar(
     placeholder: String,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
+    onUploadClick: (() -> Unit)? = null,
 ) {
     val padH = if (compact) 6.dp else 10.dp
     val padV = if (compact) 2.dp else 6.dp
@@ -151,6 +152,14 @@ fun WearSearchBar(
                 }
             },
         )
+        if (onUploadClick != null) {
+            WearRoundIconButton(
+                onClick = onUploadClick,
+                contentDescription = "Upload design",
+                modifier = Modifier.size(micSize),
+                icon = { Text("📤", fontSize = if (compact) 11.sp else 14.sp) },
+            )
+        }
         WearRoundIconButton(
             onClick = onVoiceClick,
             contentDescription = "Voice search",

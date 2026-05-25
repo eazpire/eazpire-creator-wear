@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,37 +24,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
-import coil.compose.AsyncImage
 import com.eazpire.creator.core.api.CreatorApi
 import com.eazpire.creator.core.api.CreatorPhoneUploadApi
 import com.eazpire.creator.core.auth.SecureTokenStore
 import com.eazpire.creator.core.i18n.WearTranslationStore
 import com.eazpire.creator.wear.EazColors
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private sealed class UploadOverlay {
-    data object Hidden : UploadOverlay()
-    data object Loading : UploadOverlay()
-    data class Qr(
-        val sessionId: String,
-        val primaryQrUrl: String,
-        val fallbackQrUrl: String,
-    ) : UploadOverlay()
-    data class Error(val message: String) : UploadOverlay()
-}
+private enum class InputActionTarget { Image, Prompt }
 
 @Composable
 fun WearGeneratorScreen(
@@ -68,16 +53,20 @@ fun WearGeneratorScreen(
     val ownerId = remember(tokenStore) { tokenStore.getOwnerId().orEmpty() }
     val api = remember(tokenStore) { CreatorApi(jwt = tokenStore.getJwt()) }
     val uploadApi = remember { CreatorPhoneUploadApi() }
+    val uploadController = remember(uploadApi, translationStore) {
+        WearPhoneUploadController(uploadApi, translationStore)
+    }
     val scope = rememberCoroutineScope()
 
     var prompt by remember { mutableStateOf("") }
     var uploadImageUrl by remember { mutableStateOf<String?>(null) }
-    var uploadOverlay by remember { mutableStateOf<UploadOverlay>(UploadOverlay.Hidden) }
-    var qrModelUrl by remember { mutableStateOf<String?>(null) }
     var generating by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf<String?>(null) }
     var showGenStarted by remember { mutableStateOf(false) }
-    var pollJob by remember { mutableStateOf<Job?>(null) }
+    var inputActionTarget by remember { mutableStateOf<InputActionTarget?>(null) }
+    var showGenConfirm by remember { mutableStateOf(false) }
+    var confirmModel by remember { mutableStateOf<WearGenerateConfirmModel?>(null) }
+    var confirmLoading by remember { mutableStateOf(false) }
 
     val speechLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
@@ -106,83 +95,13 @@ fun WearGeneratorScreen(
         }
     }
 
-    fun closeUploadOverlay() {
-        pollJob?.cancel()
-        pollJob = null
-        uploadOverlay = UploadOverlay.Hidden
-        qrModelUrl = null
-    }
-
     fun startUploadQr() {
-        if (ownerId.isBlank()) return
-        pollJob?.cancel()
-        scope.launch {
-            uploadOverlay = UploadOverlay.Loading
-            status = null
-            try {
-                val cfg = withContext(Dispatchers.IO) { uploadApi.getConfig() }
-                if (!cfg.optBoolean("ok", false)) {
-                    uploadOverlay = UploadOverlay.Error(
-                        cfg.optString("message", cfg.optString("error", "not_configured")),
-                    )
-                    return@launch
-                }
-                val session = withContext(Dispatchers.IO) { uploadApi.createSession(ownerId) }
-                if (!session.optBoolean("ok", false)) {
-                    uploadOverlay = UploadOverlay.Error(
-                        session.optString("error", session.optString("message", "session_failed")),
-                    )
-                    return@launch
-                }
-                val sid = session.optString("session_id", "").trim()
-                val scanUrl = session.optString("scan_url", "").trim()
-                if (sid.isBlank() || scanUrl.isBlank()) {
-                    uploadOverlay = UploadOverlay.Error("session_failed")
-                    return@launch
-                }
-                val primary = uploadApi.qrImageUrl(sid)
-                val fallback = uploadApi.qrFallbackUrl(scanUrl)
-                qrModelUrl = primary
-                uploadOverlay = UploadOverlay.Qr(sid, primary, fallback)
-
-                pollJob = scope.launch {
-                    while (isActive) {
-                        delay(2000)
-                        val poll = withContext(Dispatchers.IO) {
-                            uploadApi.pollSession(sid, ownerId)
-                        }
-                        if (!poll.optBoolean("ok", true)) {
-                            val err = poll.optString("error", "")
-                            if (err.isNotBlank()) {
-                                uploadOverlay = UploadOverlay.Error(err)
-                                break
-                            }
-                        }
-                        val st = poll.optString("status", "")
-                        if (st == "completed") {
-                            val url = poll.optString("image_url", "").trim()
-                            if (url.isNotBlank()) {
-                                uploadImageUrl = url
-                                closeUploadOverlay()
-                                status = translationStore.t("wear.upload_ready", "Image ready")
-                                break
-                            }
-                        }
-                        if (st == "expired") {
-                            uploadOverlay = UploadOverlay.Error(
-                                translationStore.t("wear.upload_expired", "Upload expired"),
-                            )
-                            break
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                uploadOverlay = UploadOverlay.Error(e.message ?: "error")
-            }
+        uploadController.start(ownerId, scope) { url ->
+            uploadImageUrl = url
         }
     }
 
-    fun generate() {
+    fun runGenerate() {
         if (ownerId.isBlank()) return
         generating = true
         status = null
@@ -200,8 +119,8 @@ fun WearGeneratorScreen(
                     res.has("job_id")
                 if (accepted) {
                     showGenStarted = true
-                    status = translationStore.t("wear.gen_started", "Generation started")
                     prompt = ""
+                    uploadImageUrl = null
                     delay(1400)
                     showGenStarted = false
                     onGenerationStarted()
@@ -220,156 +139,131 @@ fun WearGeneratorScreen(
         }
     }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            pollJob?.cancel()
+    fun openGenerateConfirm() {
+        if (ownerId.isBlank()) return
+        showGenConfirm = true
+        confirmLoading = true
+        confirmModel = null
+        scope.launch {
+            confirmModel = loadWearGenerateConfirmModel(api, ownerId, translationStore)
+            confirmLoading = false
         }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        when (val overlay = uploadOverlay) {
-            UploadOverlay.Hidden -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
+        if (uploadController.state is WearPhoneUploadState.Hidden) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
+                    val imageUrl = uploadImageUrl
+                    if (!imageUrl.isNullOrBlank()) {
+                        WearImagePreviewSlot(
+                            imageUrl = imageUrl,
+                            onClick = { inputActionTarget = InputActionTarget.Image },
+                            modifier = Modifier.size(52.dp),
+                        )
+                    } else {
                         WearRoundIconButton(
                             onClick = { startUploadQr() },
                             contentDescription = translationStore.t("wear.upload", "Phone upload"),
-                            selected = uploadImageUrl != null,
                         ) {
                             Text("📱", fontSize = 22.sp)
-                        }
-                        WearRoundIconButton(
-                            onClick = { launchVoice() },
-                            contentDescription = translationStore.t("wear.audio", "Audio"),
-                            selected = prompt.isNotBlank(),
-                        ) {
-                            Text("🎤", fontSize = 22.sp)
                         }
                     }
 
                     if (prompt.isNotBlank()) {
-                        Text(
-                            text = prompt.take(60),
-                            style = MaterialTheme.typography.caption2,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 6.dp),
-                            maxLines = 2,
+                        WearTextPreviewSlot(
+                            text = prompt.take(48),
+                            onClick = { inputActionTarget = InputActionTarget.Prompt },
+                            modifier = Modifier.size(52.dp),
                         )
+                    } else {
+                        WearRoundIconButton(
+                            onClick = { launchVoice() },
+                            contentDescription = translationStore.t("wear.audio", "Audio"),
+                        ) {
+                            Text("🎤", fontSize = 22.sp)
+                        }
                     }
-                    uploadImageUrl?.let {
-                        Text(
-                            text = translationStore.t("wear.upload_ready", "Image ready"),
-                            style = MaterialTheme.typography.caption2,
-                            color = EazColors.Orange,
-                            modifier = Modifier.padding(top = 2.dp),
-                        )
-                    }
+                }
 
-                    WearPulsingGenerateButton(
-                        onClick = { generate() },
-                        enabled = !generating,
-                        label = translationStore.t("wear.generate", "Generate"),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp, start = 12.dp, end = 12.dp),
-                    )
+                WearPulsingGenerateButton(
+                    onClick = { openGenerateConfirm() },
+                    enabled = !generating,
+                    label = translationStore.t("wear.generate", "Generate"),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp, start = 12.dp, end = 12.dp),
+                )
 
-                    if (generating) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.padding(top = 8.dp),
-                        )
-                    }
-                    status?.let { msg ->
-                        Text(
-                            text = msg,
-                            style = MaterialTheme.typography.caption2,
-                            color = EazColors.Orange,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-                    }
+                if (generating) {
+                    CircularProgressIndicator(modifier = Modifier.padding(top = 8.dp))
                 }
-            }
-            UploadOverlay.Loading -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-            is UploadOverlay.Qr -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 6.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
+                status?.let { msg ->
                     Text(
-                        text = translationStore.t("wear.upload_scan", "Scan with your phone"),
+                        text = msg,
                         style = MaterialTheme.typography.caption2,
-                        textAlign = TextAlign.Center,
-                    )
-                    val model = qrModelUrl ?: overlay.primaryQrUrl
-                    AsyncImage(
-                        model = model,
-                        contentDescription = "Upload QR",
-                        modifier = Modifier
-                            .padding(vertical = 6.dp)
-                            .size(120.dp),
-                        contentScale = ContentScale.Fit,
-                        onError = {
-                            if (qrModelUrl != overlay.fallbackQrUrl) {
-                                qrModelUrl = overlay.fallbackQrUrl
-                            }
-                        },
-                    )
-                    Button(onClick = { closeUploadOverlay() }) {
-                        Text(translationStore.t("wear.back", "Back"))
-                    }
-                }
-            }
-            is UploadOverlay.Error -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Text(
-                        text = translationStore.t("wear.upload_error", "Upload not available"),
-                        style = MaterialTheme.typography.caption2,
-                        textAlign = TextAlign.Center,
-                    )
-                    Text(
-                        text = overlay.message,
-                        style = MaterialTheme.typography.caption2,
+                        color = EazColors.Orange,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(top = 4.dp),
                     )
-                    Button(
-                        onClick = { closeUploadOverlay() },
-                        modifier = Modifier.padding(top = 8.dp),
-                    ) {
-                        Text(translationStore.t("wear.back", "Back"))
-                    }
                 }
             }
+        }
+
+        WearPhoneUploadOverlay(
+            controller = uploadController,
+            translationStore = translationStore,
+            modifier = Modifier.fillMaxSize(),
+        )
+
+        inputActionTarget?.let { target ->
+            WearInputActionMenu(
+                translationStore = translationStore,
+                onDelete = {
+                    when (target) {
+                        InputActionTarget.Image -> uploadImageUrl = null
+                        InputActionTarget.Prompt -> prompt = ""
+                    }
+                    inputActionTarget = null
+                },
+                onReupload = {
+                    inputActionTarget = null
+                    when (target) {
+                        InputActionTarget.Image -> startUploadQr()
+                        InputActionTarget.Prompt -> launchVoice()
+                    }
+                },
+                onBack = { inputActionTarget = null },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        if (showGenConfirm) {
+            WearGenerateConfirmOverlay(
+                model = confirmModel ?: WearGenerateConfirmModel(
+                    useEaz = false,
+                    isFree = false,
+                    canProceed = false,
+                ),
+                loading = confirmLoading,
+                translationStore = translationStore,
+                onConfirm = {
+                    showGenConfirm = false
+                    if (confirmModel?.canProceed == true) runGenerate()
+                },
+                onCancel = { showGenConfirm = false },
+                modifier = Modifier.fillMaxSize(),
+            )
         }
 
         AnimatedVisibility(

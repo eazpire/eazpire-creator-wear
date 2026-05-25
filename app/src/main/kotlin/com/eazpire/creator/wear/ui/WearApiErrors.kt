@@ -22,6 +22,10 @@ internal fun formatWearApiError(
             "wear.err_rate_limit",
             "Too many jobs running. Wait and try again.",
         )
+        "insufficient_balance", "insufficient_eaz" -> translationStore.t(
+            "wear.err_insufficient_eaz",
+            "Not enough EAZ. Top up on eazpire.com.",
+        )
         else -> ""
     }
     if (friendly.isNotBlank()) return friendly

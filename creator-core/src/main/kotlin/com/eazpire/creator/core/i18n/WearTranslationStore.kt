@@ -49,8 +49,22 @@ class WearTranslationStore(private var lang: String = "en") {
             "wear.upload_scan" to "Scan with your phone",
             "wear.upload_done" to "Upload complete",
             "wear.upload_error" to "Upload not available",
+            "wear.upload_expired" to "Upload expired",
             "wear.loading" to "Loading…",
             "wear.refresh" to "Refresh",
+            "wear.designs_active" to "Active",
+            "wear.designs_inactive" to "Inactive",
+            "wear.no_inactive_designs" to "No inactive designs",
+            "wear.design_upload_started" to "Upload started",
+            "wear.action_delete" to "Delete",
+            "wear.action_reupload" to "Upload again",
+            "wear.confirm" to "Confirm",
+            "wear.cancel" to "Cancel",
+            "wear.gen_confirm_trial" to "Free generations left: {{count}}",
+            "wear.gen_confirm_eaz" to "Balance: {{balance}} EAZ\nCost: {{cost}} EAZ",
+            "wear.gen_confirm_free" to "Generate for free?",
+            "wear.gen_confirm_prompt" to "Do you want to generate?",
+            "wear.err_insufficient_eaz" to "Not enough EAZ. Top up on eazpire.com.",
         )
     }
 }
