@@ -45,7 +45,7 @@ private const val BlockRadius = 3f
 /** Falling Tetris-piece assembly loader (matches web prototype timing). */
 @Composable
 fun WearTetrisAssemblyLoader(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(60.dp),
 ) {
     val transition = rememberInfiniteTransition(label = "tetris")
     val global by transition.animateFloat(
@@ -57,7 +57,7 @@ fun WearTetrisAssemblyLoader(
         ),
         label = "tetrisPhase",
     )
-    Canvas(modifier.then(Modifier.size(60.dp))) {
+    Canvas(modifier) {
         val sx = size.width / ViewW
         val sy = size.height / ViewH
         val globalMs = global * CycleMs

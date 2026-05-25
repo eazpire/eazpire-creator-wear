@@ -140,6 +140,7 @@ fun WearJobsScreen(
                             statusLine = wearJobStatusLine(done, saving, message, progress),
                             progress = if (progress >= 0) progress else 0,
                             previewUrl = preview.takeIf { it.isNotBlank() },
+                            done = done,
                         ),
                     )
                 }
