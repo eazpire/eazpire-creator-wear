@@ -81,7 +81,9 @@ fun WearCarouselProductImage(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 2.dp, horizontal = 8.dp),
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp)
+                                .padding(top = 2.dp),
                         )
                     }
                 },
