@@ -6,10 +6,6 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import androidx.wear.ambient.AmbientLifecycleObserver
@@ -17,8 +13,6 @@ import com.eazpire.creator.core.auth.SecureTokenStore
 import com.eazpire.creator.core.auth.WearSessionGate
 import com.eazpire.creator.wear.auth.WearAuthListenerService
 import com.eazpire.creator.wear.auth.bootstrapAuthFromPhone
-import com.eazpire.creator.wear.dev.WearDevFlags
-import com.eazpire.creator.wear.ui.WearJobAnimationTestScreen
 import kotlinx.coroutines.launch
 
 /**
@@ -53,20 +47,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             WearEazTheme {
-                var showAnimGallery by remember {
-                    mutableStateOf(WearDevFlags.shouldLaunchJobAnimGallery())
-                }
-                if (showAnimGallery) {
-                    WearJobAnimationTestScreen(
-                        onOpenApp = { showAnimGallery = false },
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                } else {
-                    WearApp(
-                        tokenStore = tokenStore,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
+                WearApp(
+                    tokenStore = tokenStore,
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
         }
     }

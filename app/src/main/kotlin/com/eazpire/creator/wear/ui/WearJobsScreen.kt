@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.foundation.lazy.AutoCenteringParams
@@ -41,6 +40,7 @@ data class WearJobRow(
     val statusLine: String,
     val progress: Int,
     val previewUrl: String?,
+    val done: Boolean,
 )
 
 internal fun wearJobKindLabel(type: String, action: String): String {
@@ -186,7 +186,11 @@ fun WearJobsScreen(
             }
         }
         if (loading && jobs.isEmpty()) {
-            item { CircularProgressIndicator() }
+            item {
+                WearTetrisAssemblyLoader(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                )
+            }
         } else if (jobs.isEmpty()) {
             item {
                 Text(
@@ -206,7 +210,9 @@ fun WearJobsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    if (!job.previewUrl.isNullOrBlank()) {
+                    if (!job.done) {
+                        WearTetrisAssemblyLoader(modifier = Modifier.size(44.dp))
+                    } else if (!job.previewUrl.isNullOrBlank()) {
                         AsyncImage(
                             model = job.previewUrl,
                             contentDescription = job.title,
