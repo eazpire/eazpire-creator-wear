@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,7 +33,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -110,6 +113,43 @@ fun WearPulsingGenerateButton(
     }
 }
 
+/**
+ * Wide upload arrow + tray (same motif as Eazy QR center logo / creator phone upload QR).
+ */
+@Composable
+fun WearUploadArrowIcon(
+    modifier: Modifier = Modifier.size(18.dp),
+) {
+    val gradient = Brush.verticalGradient(
+        0f to Color(0xFFFFE082),
+        0.35f to Color(0xFFFBBF24),
+        0.7f to EazColors.Orange,
+        1f to Color(0xFFEA580C),
+    )
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        fun nx(x: Float) = x / 24f * w
+        fun ny(y: Float) = y / 24f * h
+
+        val icon = Path().apply {
+            moveTo(nx(12f), ny(2.6f))
+            lineTo(nx(20.4f), ny(11.2f))
+            lineTo(nx(16.6f), ny(11.2f))
+            lineTo(nx(16.6f), ny(14f))
+            lineTo(nx(20f), ny(14f))
+            lineTo(nx(20f), ny(18.8f))
+            lineTo(nx(4f), ny(18.8f))
+            lineTo(nx(4f), ny(14f))
+            lineTo(nx(7.4f), ny(14f))
+            lineTo(nx(7.4f), ny(11.2f))
+            lineTo(nx(3.6f), ny(11.2f))
+            close()
+        }
+        drawPath(icon, gradient)
+    }
+}
+
 /** Upload control outside the search pill — distinct from orange mic button. */
 @Composable
 fun WearUploadIconButton(
@@ -124,7 +164,7 @@ fun WearUploadIconButton(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text("⬆", fontSize = 14.sp, color = EazColors.Orange)
+        WearUploadArrowIcon(modifier = Modifier.size(16.dp))
     }
 }
 
