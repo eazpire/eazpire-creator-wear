@@ -5,7 +5,11 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.mutableStateOf
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.wear.ambient.AmbientLifecycleObserver
 import com.eazpire.creator.core.auth.SecureTokenStore
 import com.eazpire.creator.wear.auth.WearAuthListenerService
 import com.eazpire.creator.wear.auth.bootstrapAuthFromPhone
@@ -14,14 +18,27 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
 
     private lateinit var tokenStore: SecureTokenStore
+    private val isAmbientState = mutableStateOf(false)
+
+    private val ambientObserver: AmbientLifecycleObserver by lazy {
+        AmbientLifecycleObserver(this) { ambientState ->
+            isAmbientState.value = ambientState.isAmbient
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         keepInteractiveForWear()
         tokenStore = SecureTokenStore(this)
+        lifecycle.addObserver(ambientObserver)
+
         setContent {
             WearEazTheme {
-                WearApp(tokenStore = tokenStore)
+                WearAmbientRoot(
+                    tokenStore = tokenStore,
+                    isAmbient = isAmbientState.value,
+                )
             }
         }
     }
@@ -41,12 +58,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** Prevent immediate ambient / watch-face takeover on Wear emulators while testing. */
     private fun keepInteractiveForWear() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
         }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
     }
 }

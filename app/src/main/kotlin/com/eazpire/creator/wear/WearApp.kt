@@ -23,10 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.Vignette
-import androidx.wear.compose.material.VignettePosition
 import com.eazpire.creator.core.auth.SecureTokenStore
 import com.eazpire.creator.core.i18n.WearTranslationStore
 import com.eazpire.creator.wear.auth.WearAuthListenerService
@@ -106,12 +103,10 @@ fun WearApp(tokenStore: SecureTokenStore) {
         onDispose { context.unregisterReceiver(receiver) }
     }
 
-    Scaffold(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(EazColors.CreatorBg),
-        timeText = { },
-        vignette = { if (!showSplash) Vignette(vignettePosition = VignettePosition.TopAndBottom) },
     ) {
         when {
             showSplash -> WearSplashScreen(modifier = Modifier.fillMaxSize())

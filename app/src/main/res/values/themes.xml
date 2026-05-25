@@ -4,5 +4,8 @@
         <item name="android:windowBackground">@color/eaz_wear_bg</item>
         <item name="android:colorBackground">@color/eaz_wear_bg</item>
         <item name="android:statusBarColor">@color/eaz_wear_bg</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 </resources>

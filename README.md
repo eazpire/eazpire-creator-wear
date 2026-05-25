@@ -21,7 +21,9 @@ cd wear
 ./gradlew assembleDebug
 ```
 
-From repo root: `npm run wear:build`
+From repo root: `npm run wear:build` or `npm run wear:run-emulator`
+
+On Windows, outputs go to `%LOCALAPPDATA%\eazpire-wear-build\` (avoids OneDrive file locks and `packageDebug` NPE). See `EMULATOR_QUICKSTART.md`.
 
 ## Setup & Play
 

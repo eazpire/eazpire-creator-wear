@@ -57,6 +57,31 @@ Startet die App direkt auf dem laufenden Emulator.
 
 ---
 
+## Build-Fehler `packageDebug` / NullPointerException
+
+Ursache war oft **OneDrive-Sperre** auf `wear/*/build` oder kaputte Zwischenstände.
+
+**Fix im Projekt:** Builds landen lokal unter  
+`%LOCALAPPDATA%\eazpire-wear-build\` (nicht im OneDrive-Ordner).
+
+Wenn es in Android Studio noch scheitert:
+
+1. **Build → Clean Project**, dann **Rebuild**
+2. Oder Terminal: `cd wear` → `.\gradlew.bat --stop` → `.\gradlew.bat :app:assembleDebug`
+3. Bei „Unable to delete directory“: Android Studio kurz schließen, Befehl erneut ausführen
+
+Debug-APK: `%LOCALAPPDATA%\eazpire-wear-build\app\outputs\apk\debug\app-debug.apk`
+
+## Nur ein kleiner Streifen oben („Eazpire Creator“) + Uhr?
+
+Das ist **kein Widget** — die Uhr war im **Ambient-Modus** (Energiesparen). Die App wurde oben als Mini-Streifen gezeichnet, darunter das Zifferblatt.
+
+**Fix:** App antippen / Bildschirm antippen → **interaktiver Modus** → volles Display (Logo, Tabs, Inhalt).
+
+Im Emulator: **Einstellungen → Entwickleroptionen → Bildschirm bleibt aktiv** (Stay awake) oder Uhr während des Tests laden.
+
+---
+
 ## Echte Daten (optional)
 
 - Phone-Projekt: `creator-worker/android` → einloggen  
