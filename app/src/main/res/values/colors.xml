@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="eaz_wear_bg">#070B14</color>
     <color name="eazpire_orange">#F97316</color>
     <color name="ic_launcher_background">#0F172A</color>
 </resources>

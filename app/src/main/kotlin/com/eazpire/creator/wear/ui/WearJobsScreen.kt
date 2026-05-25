@@ -30,14 +30,20 @@ fun WearJobsScreen(
     tokenStore: SecureTokenStore,
     translationStore: WearTranslationStore,
     refreshKey: Int,
-    modifier: Modifier = Modifier
+    useDemoData: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
     val ownerId = remember(tokenStore) { tokenStore.getOwnerId().orEmpty() }
     val api = remember(tokenStore) { CreatorApi(jwt = tokenStore.getJwt()) }
     var loading by remember { mutableStateOf(true) }
     var jobs by remember { mutableStateOf<List<WearJobRow>>(emptyList()) }
 
-    LaunchedEffect(ownerId, refreshKey) {
+    LaunchedEffect(ownerId, refreshKey, useDemoData) {
+        if (useDemoData) {
+            loading = false
+            jobs = WearDemo.jobs
+            return@LaunchedEffect
+        }
         if (ownerId.isBlank()) {
             loading = false
             jobs = emptyList()
@@ -85,7 +91,7 @@ fun WearJobsScreen(
         } else if (jobs.isEmpty()) {
             item {
                 Text(
-                    text = translationStore.t("creator.notifications.empty_jobs", "No active jobs"),
+                    text = "No active jobs",
                     style = MaterialTheme.typography.body2,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()

@@ -27,14 +27,20 @@ fun WearDashboardScreen(
     tokenStore: SecureTokenStore,
     translationStore: WearTranslationStore,
     refreshKey: Int,
-    modifier: Modifier = Modifier
+    useDemoData: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
     val ownerId = remember(tokenStore) { tokenStore.getOwnerId().orEmpty() }
     val api = remember(tokenStore) { CreatorApi(jwt = tokenStore.getJwt()) }
     var loading by remember { mutableStateOf(true) }
     var lines by remember { mutableStateOf<List<String>>(emptyList()) }
 
-    LaunchedEffect(ownerId, refreshKey) {
+    LaunchedEffect(ownerId, refreshKey, useDemoData) {
+        if (useDemoData) {
+            loading = false
+            lines = WearDemo.dashboardLines
+            return@LaunchedEffect
+        }
         if (ownerId.isBlank()) {
             loading = false
             lines = emptyList()

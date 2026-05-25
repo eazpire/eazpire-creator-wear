@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.EazWear" parent="@android:style/Theme.DeviceDefault">
+        <item name="android:windowBackground">@color/eaz_wear_bg</item>
+        <item name="android:colorBackground">@color/eaz_wear_bg</item>
+        <item name="android:statusBarColor">@color/eaz_wear_bg</item>
+    </style>
+</resources>
