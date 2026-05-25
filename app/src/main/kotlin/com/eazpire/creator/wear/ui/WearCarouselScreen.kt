@@ -34,6 +34,7 @@ import kotlin.math.abs
 data class WearCarouselItem(
     val imageUrl: String?,
     val label: String? = null,
+    val jobId: String? = null,
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -52,9 +53,12 @@ fun WearCarouselScreen(
     activeLabel: String = "Active",
     inactiveLabel: String = "Inactive",
     onUploadClick: (() -> Unit)? = null,
+    initialCarouselIndex: Int = 0,
     modifier: Modifier = Modifier,
 ) {
-    var index by remember(items, searchQuery) { mutableIntStateOf(0) }
+    var index by remember(items, searchQuery, initialCarouselIndex) {
+        mutableIntStateOf(initialCarouselIndex.coerceAtLeast(0))
+    }
     val filtered = remember(items, searchQuery) {
         val q = searchQuery.trim()
         if (q.isBlank()) items
@@ -73,20 +77,28 @@ fun WearCarouselScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (showSearch) {
-            WearSearchBar(
-                query = searchQuery,
-                onQueryChange = {
-                    onSearchQueryChange(it)
-                    index = 0
-                },
-                onVoiceClick = onVoiceSearch,
-                onUploadClick = onUploadClick,
-                placeholder = searchPlaceholder,
-                compact = true,
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 0.dp, bottom = 2.dp),
-            )
+                    .padding(bottom = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                WearSearchBar(
+                    query = searchQuery,
+                    onQueryChange = {
+                        onSearchQueryChange(it)
+                        index = 0
+                    },
+                    onVoiceClick = onVoiceSearch,
+                    placeholder = searchPlaceholder,
+                    compact = true,
+                    modifier = Modifier.weight(1f),
+                )
+                if (onUploadClick != null) {
+                    WearUploadIconButton(onClick = onUploadClick)
+                }
+            }
             if (activityFilter != null && onActivityFilterChange != null) {
                 Row(
                     modifier = Modifier

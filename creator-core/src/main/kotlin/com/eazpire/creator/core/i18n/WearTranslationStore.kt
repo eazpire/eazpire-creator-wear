@@ -65,6 +65,7 @@ class WearTranslationStore(private var lang: String = "en") {
             "wear.gen_confirm_free" to "Generate for free?",
             "wear.gen_confirm_prompt" to "Do you want to generate?",
             "wear.err_insufficient_eaz" to "Not enough EAZ. Top up on eazpire.com.",
+            "wear.upload_processing" to "Uploading…",
         )
     }
 }

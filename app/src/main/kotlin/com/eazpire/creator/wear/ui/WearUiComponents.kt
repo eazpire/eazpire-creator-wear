@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -101,6 +102,24 @@ fun WearPulsingGenerateButton(
     }
 }
 
+/** Upload control outside the search pill — distinct from orange mic button. */
+@Composable
+fun WearUploadIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier.size(32.dp),
+) {
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(EazColors.CreatorSurface)
+            .border(1.5.dp, EazColors.Orange.copy(alpha = 0.85f), CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text("⬆", fontSize = 14.sp, color = EazColors.Orange)
+    }
+}
+
 @Composable
 fun WearSearchBar(
     query: String,
@@ -109,7 +128,6 @@ fun WearSearchBar(
     placeholder: String,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
-    onUploadClick: (() -> Unit)? = null,
 ) {
     val padH = if (compact) 6.dp else 10.dp
     val padV = if (compact) 2.dp else 6.dp
@@ -152,14 +170,6 @@ fun WearSearchBar(
                 }
             },
         )
-        if (onUploadClick != null) {
-            WearRoundIconButton(
-                onClick = onUploadClick,
-                contentDescription = "Upload design",
-                modifier = Modifier.size(micSize),
-                icon = { Text("📤", fontSize = if (compact) 11.sp else 14.sp) },
-            )
-        }
         WearRoundIconButton(
             onClick = onVoiceClick,
             contentDescription = "Voice search",

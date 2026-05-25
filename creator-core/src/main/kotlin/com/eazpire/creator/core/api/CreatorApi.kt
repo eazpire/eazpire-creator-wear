@@ -165,6 +165,8 @@ class CreatorApi(
             val multipart = MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("image", "design.$ext", fileBody)
+            multipart.addFormDataPart("client_device", "Wear")
+            multipart.addFormDataPart("source", "wear")
             creatorName?.takeIf { it.isNotBlank() }?.let {
                 multipart.addFormDataPart("creator_name", it)
             }
