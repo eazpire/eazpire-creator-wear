@@ -55,6 +55,7 @@ fun WearCarouselScreen(
     activeLabel: String = "Active",
     inactiveLabel: String = "Inactive",
     onUploadClick: (() -> Unit)? = null,
+    onItemClick: ((WearCarouselItem) -> Unit)? = null,
     initialCarouselIndex: Int = 0,
     modifier: Modifier = Modifier,
 ) {
