@@ -85,6 +85,8 @@ fun WearCarouselScreen(
         }
     }
     val total = filtered.size
+    val hasProcessingPreview = filtered.any { it.isProcessing && !it.imageUrl.isNullOrBlank() }
+    val showFullScreenLoader = loading && total == 0 && !hasProcessingPreview
     val safeIndex = index.coerceIn(0, (total - 1).coerceAtLeast(0))
     if (safeIndex != index) index = safeIndex
     val current = filtered.getOrNull(safeIndex)
@@ -154,7 +156,7 @@ fun WearCarouselScreen(
         }
 
         when {
-            loading -> {
+            showFullScreenLoader -> {
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -164,7 +166,7 @@ fun WearCarouselScreen(
                     CircularProgressIndicator()
                 }
             }
-            total == 0 -> {
+            total == 0 && !loading -> {
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -235,14 +237,6 @@ fun WearCarouselScreen(
                                 modifier = Modifier.padding(horizontal = 12.dp),
                             )
                         }
-                    }
-                    if (current?.isProcessing == true) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = 4.dp),
-                            strokeWidth = 2.dp,
-                        )
                     }
                 }
 

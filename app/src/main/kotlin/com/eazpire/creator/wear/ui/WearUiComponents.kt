@@ -33,6 +33,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -87,6 +89,62 @@ fun WearBackChevronButton(
             color = EazColors.Orange,
         )
     }
+}
+
+@Composable
+fun rememberWearPulseAlpha(
+    minAlpha: Float = 0.72f,
+    maxAlpha: Float = 1f,
+    durationMs: Int = 900,
+): Float {
+    val pulse = rememberInfiniteTransition(label = "wearPulse")
+    return pulse.animateFloat(
+        initialValue = minAlpha,
+        targetValue = maxAlpha,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMs, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pulseAlpha",
+    ).value
+}
+
+@Composable
+fun rememberWearPulseScale(
+    minScale: Float = 0.96f,
+    maxScale: Float = 1.04f,
+    durationMs: Int = 900,
+): Float {
+    val pulse = rememberInfiniteTransition(label = "wearPulseScale")
+    return pulse.animateFloat(
+        initialValue = minScale,
+        targetValue = maxScale,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMs, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pulseScale",
+    ).value
+}
+
+/** Design preview with a soft pulse while processing (upload / save in progress). */
+@Composable
+fun WearPulsingAsyncImage(
+    imageUrl: String,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Fit,
+) {
+    val alpha = rememberWearPulseAlpha()
+    val scale = rememberWearPulseScale()
+    AsyncImage(
+        model = imageUrl,
+        contentDescription = contentDescription,
+        modifier = modifier
+            .scale(scale)
+            .alpha(alpha),
+        contentScale = contentScale,
+    )
 }
 
 @Composable

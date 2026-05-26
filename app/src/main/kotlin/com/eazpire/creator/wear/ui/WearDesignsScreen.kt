@@ -315,7 +315,7 @@ fun WearDesignsScreen(
         if (showMainUi) {
         WearCarouselScreen(
             items = items,
-            loading = loading || uploading,
+            loading = (loading || uploading) && items.none { it.isProcessing && !it.imageUrl.isNullOrBlank() },
             emptyText = if (activityFilter == "inactive") {
                 translationStore.t("wear.no_inactive_designs", "No inactive designs")
             } else {

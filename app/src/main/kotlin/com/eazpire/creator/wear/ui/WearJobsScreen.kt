@@ -238,13 +238,14 @@ fun WearJobsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 6.dp),
-                    contentAlignment = Alignment.Center,
+                    contentAlignment = Alignment.CenterStart,
                 ) {
                     WearActiveJobCard(
                         title = job.title,
                         progress = wearJobUiProgress(job.progress, job.saving, job.done),
                         statusHint = statusHint,
                         isError = isError,
+                        previewUrl = job.previewUrl,
                     )
                 }
             }
