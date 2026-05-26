@@ -1,6 +1,5 @@
 package com.eazpire.creator.wear.ui
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,12 +7,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,12 +23,11 @@ import com.eazpire.creator.core.auth.SecureTokenStore
 import com.eazpire.creator.core.i18n.WearTranslationStore
 import com.eazpire.creator.wear.EazColors
 import kotlin.math.abs
-import kotlinx.coroutines.launch
 
 private const val PAGE_COUNT = 5
 private const val PAGE_JOBS = 4
+private const val TAB_SWIPE_THRESHOLD_PX = 36f
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WearMainShell(
     tokenStore: SecureTokenStore,
@@ -39,8 +35,7 @@ fun WearMainShell(
     refreshKey: Int,
     modifier: Modifier = Modifier,
 ) {
-    val pagerState = rememberPagerState(pageCount = { PAGE_COUNT })
-    val scope = rememberCoroutineScope()
+    var currentPage by remember { mutableIntStateOf(0) }
     var jobsRefreshNonce by remember { mutableIntStateOf(0) }
 
     val pageLabels = remember(translationStore) {
@@ -52,35 +47,31 @@ fun WearMainShell(
             translationStore.t("creator.notifications.active_jobs", "Active Jobs"),
         )
     }
-    val currentLabel = pageLabels.getOrElse(pagerState.currentPage) { "" }
-
-    fun goToJobs() {
-        scope.launch {
-            pagerState.animateScrollToPage(PAGE_JOBS)
-        }
-    }
+    val currentLabel = pageLabels.getOrElse(currentPage) { "" }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .wearRoundSafePadding(),
+            .wearRoundSafePadding()
+            .pointerInput(currentPage) {
+                var totalDrag = 0f
+                detectHorizontalDragGestures(
+                    onHorizontalDrag = { _, dragAmount -> totalDrag += dragAmount },
+                    onDragEnd = {
+                        when {
+                            totalDrag < -TAB_SWIPE_THRESHOLD_PX && currentPage < PAGE_COUNT - 1 ->
+                                currentPage++
+                            totalDrag > TAB_SWIPE_THRESHOLD_PX && currentPage > 0 ->
+                                currentPage--
+                        }
+                        totalDrag = 0f
+                    },
+                    onDragCancel = { totalDrag = 0f },
+                )
+            },
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .pointerInput(pagerState.currentPage) {
-                    detectHorizontalDragGestures { _, drag ->
-                        if (abs(drag) < 36f) return@detectHorizontalDragGestures
-                        scope.launch {
-                            when {
-                                drag < 0 && pagerState.currentPage < PAGE_COUNT - 1 ->
-                                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                                drag > 0 && pagerState.currentPage > 0 ->
-                                    pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                            }
-                        }
-                    }
-                },
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -96,7 +87,7 @@ fun WearMainShell(
             )
             WearPageDots(
                 pageCount = PAGE_COUNT,
-                currentPage = pagerState.currentPage,
+                currentPage = currentPage,
                 modifier = Modifier.padding(bottom = 4.dp),
             )
         }
@@ -107,7 +98,7 @@ fun WearMainShell(
                 .fillMaxWidth(),
         ) {
             // Only mount the visible tab — avoids Designs polling + Products enrichment running together.
-            when (pagerState.currentPage) {
+            when (currentPage) {
                 0 -> WearDashboardScreen(
                     tokenStore = tokenStore,
                     translationStore = translationStore,
@@ -120,7 +111,7 @@ fun WearMainShell(
                     refreshKey = refreshKey,
                     onGenerationStarted = {
                         jobsRefreshNonce++
-                        goToJobs()
+                        currentPage = PAGE_JOBS
                     },
                     modifier = Modifier.fillMaxSize(),
                 )
