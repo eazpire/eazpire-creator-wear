@@ -238,7 +238,7 @@ fun WearJobsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 6.dp),
-                    contentAlignment = Alignment.CenterStart,
+                    contentAlignment = Alignment.Center,
                 ) {
                     WearActiveJobCard(
                         title = job.title,

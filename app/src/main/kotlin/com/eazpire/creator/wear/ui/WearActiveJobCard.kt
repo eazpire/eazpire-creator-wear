@@ -1,9 +1,7 @@
 package com.eazpire.creator.wear.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,7 +19,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
-import coil.compose.AsyncImage
 import com.eazpire.creator.wear.EazColors
 import com.eazpire.creator.wear.R
 
@@ -37,80 +34,69 @@ fun WearActiveJobCard(
     val logoScale = rememberWearPulseScale(minScale = 0.92f, maxScale = 1.08f)
     val logoAlpha = rememberWearPulseAlpha(minAlpha = 0.78f, maxAlpha = 1f)
 
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start,
+            .padding(horizontal = 14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
-            modifier = Modifier.size(36.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            val preview = previewUrl?.takeIf { it.isNotBlank() }
-            if (preview != null) {
-                WearPulsingAsyncImage(
-                    imageUrl = preview,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(34.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                )
-            } else {
-                androidx.compose.foundation.Image(
-                    painter = painterResource(R.drawable.eazpire_creator_logo),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .scale(logoScale)
-                        .alpha(logoAlpha),
-                )
-            }
+        val preview = previewUrl?.takeIf { it.isNotBlank() }
+        if (preview != null) {
+            WearPulsingAsyncImage(
+                imageUrl = preview,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .padding(bottom = 6.dp),
+                contentScale = ContentScale.Crop,
+            )
+        } else {
+            Image(
+                painter = painterResource(R.drawable.eazpire_creator_logo),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(24.dp)
+                    .scale(logoScale)
+                    .alpha(logoAlpha)
+                    .padding(bottom = 6.dp),
+            )
         }
 
-        Column(
+        Text(
+            text = title,
+            style = MaterialTheme.typography.caption2,
+            color = EazColors.TextPrimary,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier
-                .weight(1f)
-                .padding(start = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+        )
+        WearTetrisAssemblyLoader(
+            modifier = Modifier
+                .size(88.dp)
+                .padding(vertical = 4.dp),
+        )
+        WearJobProgressBar(
+            progress = progress,
+            modifier = Modifier
+                .fillMaxWidth(0.82f)
+                .padding(top = 12.dp),
+        )
+        if (!statusHint.isNullOrBlank()) {
             Text(
-                text = title,
+                text = statusHint,
                 style = MaterialTheme.typography.caption2,
-                color = EazColors.TextPrimary,
+                color = if (isError) EazColors.Orange else EazColors.TextPrimary.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 6.dp),
+                    .padding(top = 4.dp),
             )
-            WearTetrisAssemblyLoader(
-                modifier = Modifier
-                    .size(72.dp)
-                    .padding(vertical = 2.dp),
-            )
-            WearJobProgressBar(
-                progress = progress,
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .padding(top = 8.dp),
-            )
-            if (!statusHint.isNullOrBlank()) {
-                Text(
-                    text = statusHint,
-                    style = MaterialTheme.typography.caption2,
-                    color = if (isError) EazColors.Orange else EazColors.TextPrimary.copy(alpha = 0.5f),
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-                )
-            }
         }
     }
 }
