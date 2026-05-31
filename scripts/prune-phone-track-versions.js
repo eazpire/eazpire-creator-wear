@@ -106,7 +106,7 @@ async function main() {
     }
 
     console.log('Committing edit…');
-    await publisher.edits.commit({ packageName, editId });
+    await publisher.edits.commit({ packageName, editId, changesNotSentForReview: true });
     console.log('OK: phone tracks pruned. Wear bundles should only remain on wear:* tracks.');
   } catch (e) {
     try {

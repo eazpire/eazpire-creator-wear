@@ -157,8 +157,12 @@ async function main() {
       console.log(`Pruned Wear codes from phone track ${name}`);
     }
 
-    await publisher.edits.commit({ packageName: opts.package, editId });
-    console.log('Edit committed.');
+    await publisher.edits.commit({
+      packageName: opts.package,
+      editId,
+      changesNotSentForReview: true,
+    });
+    console.log('Edit committed (changesNotSentForReview=true — promote in Play Console if needed).');
   } catch (e) {
     try {
       await publisher.edits.delete({ packageName: opts.package, editId });
