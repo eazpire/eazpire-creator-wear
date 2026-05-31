@@ -54,8 +54,12 @@ fun WearApp(
     LaunchedEffect(Unit) {
         val started = System.currentTimeMillis()
         if (!WearSessionGate.isSessionReady(context, tokenStore)) {
-            bootstrapAuthFromPhone(context, tokenStore)
-            refreshAuthState()
+            repeat(4) {
+                bootstrapAuthFromPhone(context, tokenStore)
+                refreshAuthState()
+                if (WearSessionGate.isSessionReady(context, tokenStore)) return@repeat
+                delay(750)
+            }
         }
         val remaining = SPLASH_MIN_MS - (System.currentTimeMillis() - started)
         if (remaining > 0) delay(remaining)

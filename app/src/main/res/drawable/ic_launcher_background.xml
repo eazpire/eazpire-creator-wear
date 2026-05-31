@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Oranger Icon-Hintergrund (#f97316) -->
+<!-- Black launcher plate (Wear branded launch / Play quality). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="#f97316" />
+    <solid android:color="#000000" />
 </shape>
