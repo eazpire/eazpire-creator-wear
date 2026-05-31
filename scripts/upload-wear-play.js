@@ -47,23 +47,21 @@ async function getTrackReleases(publisher, packageName, editId, track) {
 
 /**
  * Play allows only one release with status "completed" per track.
- * Merge all versionCodes (existing + new) into a single completed release.
+ * Use only the new versionCode — do not list older codes in the same release (Play 403:
+ * "cannot be downloaded … higher version codes").
  */
 async function assignVersionToTrack(publisher, packageName, editId, track, versionCode, status) {
   const existing = await getTrackReleases(publisher, packageName, editId, track);
   const codeStr = String(versionCode);
-  const versionCodes = new Set();
-  for (const rel of existing) {
-    for (const vc of rel.versionCodes || []) versionCodes.add(String(vc));
-  }
-  if (versionCodes.has(codeStr)) {
+  const already = existing.some((rel) =>
+    (rel.versionCodes || []).map(String).includes(codeStr)
+  );
+  if (already) {
     console.log(`versionCode ${versionCode} already assigned to ${track}`);
     return;
   }
-  versionCodes.add(codeStr);
 
-  const sorted = [...versionCodes].sort((a, b) => Number(a) - Number(b));
-  const releases = [{ status, versionCodes: sorted }];
+  const releases = [{ status, versionCodes: [codeStr] }];
 
   await publisher.edits.tracks.update({
     packageName,
@@ -72,7 +70,7 @@ async function assignVersionToTrack(publisher, packageName, editId, track, versi
     requestBody: { track, releases },
   });
   console.log(
-    `Assigned versionCode ${versionCode} to ${track} (one ${status} release, versionCodes: ${sorted.join(', ')})`
+    `Assigned versionCode ${versionCode} to ${track} (one ${status} release; prior codes removed from track)`
   );
 }
 
