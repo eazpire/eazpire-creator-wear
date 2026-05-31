@@ -45,33 +45,26 @@ async function getTrackReleases(publisher, packageName, editId, track) {
   return row?.releases || [];
 }
 
-/** Play rejects updates if we echo read-only / unknown release fields from list/get. */
-function sanitizeRelease(rel) {
-  const out = {
-    status: rel.status || 'completed',
-    versionCodes: (rel.versionCodes || []).map(String),
-  };
-  if (rel.userFraction != null) out.userFraction = rel.userFraction;
-  if (rel.countryTargeting) out.countryTargeting = rel.countryTargeting;
-  return out;
-}
-
-/** Append a release; never replace the whole track (removing in-review versionCodes fails). */
+/**
+ * Play allows only one release with status "completed" per track.
+ * Merge all versionCodes (existing + new) into a single completed release.
+ */
 async function assignVersionToTrack(publisher, packageName, editId, track, versionCode, status) {
   const existing = await getTrackReleases(publisher, packageName, editId, track);
   const codeStr = String(versionCode);
-  const already = existing.some((rel) =>
-    (rel.versionCodes || []).map(String).includes(codeStr)
-  );
-  if (already) {
+  const versionCodes = new Set();
+  for (const rel of existing) {
+    for (const vc of rel.versionCodes || []) versionCodes.add(String(vc));
+  }
+  if (versionCodes.has(codeStr)) {
     console.log(`versionCode ${versionCode} already assigned to ${track}`);
     return;
   }
-  const newStatus = existing.length > 0 ? 'draft' : status;
-  const releases = [
-    ...existing.map(sanitizeRelease),
-    { status: newStatus, versionCodes: [codeStr] },
-  ];
+  versionCodes.add(codeStr);
+
+  const sorted = [...versionCodes].sort((a, b) => Number(a) - Number(b));
+  const releases = [{ status, versionCodes: sorted }];
+
   await publisher.edits.tracks.update({
     packageName,
     editId,
@@ -79,7 +72,7 @@ async function assignVersionToTrack(publisher, packageName, editId, track, versi
     requestBody: { track, releases },
   });
   console.log(
-    `Assigned versionCode ${versionCode} to ${track} as ${newStatus} (${existing.length} existing release(s) kept)`
+    `Assigned versionCode ${versionCode} to ${track} (one ${status} release, versionCodes: ${sorted.join(', ')})`
   );
 }
 
