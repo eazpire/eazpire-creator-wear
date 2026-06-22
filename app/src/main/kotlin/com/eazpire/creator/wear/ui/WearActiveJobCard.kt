@@ -1,6 +1,5 @@
 package com.eazpire.creator.wear.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,7 +12,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import com.eazpire.creator.core.brand.BrandAssetSlots
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -52,8 +51,9 @@ fun WearActiveJobCard(
                 contentScale = ContentScale.Crop,
             )
         } else {
-            Image(
-                painter = painterResource(R.drawable.eazpire_creator_logo),
+            WatchBrandSlotImage(
+                slot = BrandAssetSlots.CREATOR_WATCH_LOGO,
+                fallbackResId = R.drawable.eazpire_creator_logo,
                 contentDescription = null,
                 modifier = Modifier
                     .size(24.dp)
